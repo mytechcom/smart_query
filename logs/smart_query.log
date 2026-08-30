@@ -1,0 +1,37 @@
+2026-08-30 19:40:02,757 | WARNING  | smart_query | SQL 未通过安全校验，已拦截：'DELETE FROM orders'
+2026-08-30 19:40:41,839 | INFO     | smart_query | 收到查询请求：'统计今天各个品类的销售额'
+2026-08-30 19:40:41,840 | WARNING  | smart_query | LLM 意图识别失败（KeyError: '"chart_type"'），使用规则兜底
+2026-08-30 19:40:41,851 | INFO     | smart_query | 意图识别（规则兜底）：query='统计今天各个品类的销售额' → chart_type=bar
+2026-08-30 19:40:45,951 | INFO     | smart_query | LLM 调用开始：model=deepseek-v4-flash json_mode=True 提示词字符数=1128
+2026-08-30 19:40:51,540 | INFO     | smart_query | LLM 调用完成：耗时=9684ms 输出长度=349
+2026-08-30 19:40:51,541 | INFO     | smart_query | SQL 生成完成（LLM）：query='统计今天各个品类的销售额' 耗时=9685ms
+SQL=SELECT c.name AS category, SUM(oi.quantity * oi.price) AS sales_amount FROM orders o JOIN order_items oi ON o.id = oi.order_id JOIN products p ON oi.product_id = p.id JOIN categories c ON p.category_id = c.id WHERE DATE(o.created_at) = CURDATE() GROUP BY c.id, c.name ORDER BY sales_amount DESC
+2026-08-30 19:40:51,856 | INFO     | smart_query | SQL 执行成功：2 行，耗时=310ms
+SQL=SELECT c.name AS category, SUM(oi.quantity * oi.price) AS sales_amount FROM orders o JOIN order_items oi ON o.id = oi.order_id JOIN products p ON oi.product_id = p.id JOIN categories c ON p.category_id = c.id WHERE DATE(o.created_at) = CURDATE() GROUP BY c.id, c.name ORDER BY sales_amount DESC
+2026-08-30 19:40:51,857 | INFO     | smart_query | 查询完成：query='统计今天各个品类的销售额' chart_type=bar rows=2 总耗时=10018ms
+2026-08-30 19:40:51,867 | INFO     | smart_query | 前端收到响应：query='统计今天各个品类的销售额' rows=2
+2026-08-30 19:43:25,667 | INFO     | smart_query | 收到查询请求：'电脑品牌的销售量前十'
+2026-08-30 19:43:25,668 | WARNING  | smart_query | LLM 意图识别失败（KeyError: '"chart_type"'），使用规则兜底
+2026-08-30 19:43:25,670 | INFO     | smart_query | 意图识别（规则兜底）：query='电脑品牌的销售量前十' → chart_type=table
+2026-08-30 19:43:25,676 | INFO     | smart_query | LLM 调用开始：model=deepseek-v4-flash json_mode=True 提示词字符数=1126
+2026-08-30 19:43:35,496 | INFO     | smart_query | LLM 调用完成：耗时=9825ms 输出长度=302
+2026-08-30 19:43:35,498 | INFO     | smart_query | SQL 生成完成（LLM）：query='电脑品牌的销售量前十' 耗时=9826ms
+SQL=SELECT p.name AS product_name, SUM(oi.quantity) AS sales_volume FROM order_items oi JOIN products p ON oi.product_id = p.id JOIN categories c ON p.category_id = c.id WHERE c.name = '电脑' GROUP BY p.id, p.name ORDER BY sales_volume DESC LIMIT 10;
+2026-08-30 19:43:35,575 | INFO     | smart_query | SQL 执行成功：2 行，耗时=74ms
+SQL=SELECT p.name AS product_name, SUM(oi.quantity) AS sales_volume FROM order_items oi JOIN products p ON oi.product_id = p.id JOIN categories c ON p.category_id = c.id WHERE c.name = '电脑' GROUP BY p.id, p.name ORDER BY sales_volume DESC LIMIT 10;
+2026-08-30 19:43:35,577 | INFO     | smart_query | 查询完成：query='电脑品牌的销售量前十' chart_type=table rows=2 总耗时=9910ms
+2026-08-30 19:43:35,588 | INFO     | smart_query | 前端收到响应：query='电脑品牌的销售量前十' rows=2
+2026-08-30 20:00:24,311 | INFO     | smart_query | LLM 调用开始（LangChain）：model=deepseek-v4-flash json_mode=True 提示词字符数=431
+2026-08-30 20:00:26,122 | INFO     | smart_query | LLM 调用完成（LangChain）：耗时=7490ms 输出长度=68
+2026-08-30 20:00:26,122 | INFO     | smart_query | 意图识别完成：query='统计各品类销售额' → chart_type=bar confidence=0.95 来源=llm 耗时=9747ms
+2026-08-30 20:00:26,126 | INFO     | smart_query | LLM 调用开始（LangChain）：model=deepseek-v4-flash json_mode=True 提示词字符数=430
+2026-08-30 20:00:29,877 | INFO     | smart_query | LLM 调用完成（LangChain）：耗时=3753ms 输出长度=58
+2026-08-30 20:00:29,877 | INFO     | smart_query | 意图识别完成：query='近7天销售趋势' → chart_type=line confidence=0.95 来源=llm 耗时=3754ms
+2026-08-30 20:00:29,880 | INFO     | smart_query | LLM 调用开始（LangChain）：model=deepseek-v4-flash json_mode=True 提示词字符数=1122
+2026-08-30 20:00:34,616 | INFO     | smart_query | LLM 调用完成（LangChain）：耗时=4738ms 输出长度=302
+2026-08-30 20:00:34,617 | INFO     | smart_query | SQL 生成完成（LLM）：query='统计各品类销售额' 耗时=4739ms
+SQL=SELECT c.name AS category_name, SUM(oi.quantity * oi.price) AS sales_amount FROM categories c JOIN products p ON c.id = p.category_id JOIN order_items oi ON p.id = oi.product_id GROUP BY c.id, c.name ORDER BY sales_amount DESC
+2026-08-30 20:01:31,366 | INFO     | smart_query | LLM 调用开始（openai SDK 兜底）：model=deepseek-v4-flash json_mode=True 提示词字符数=435
+2026-08-30 20:01:33,489 | ERROR    | smart_query | LLM 调用失败：BadRequestError: Error code: 400 - {'error': {'message': 'Empty input messages', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_request_error'}}（base_url=https://api.deepseek.com/v1）耗时=4705ms
+2026-08-30 20:01:33,490 | WARNING  | smart_query | LLM 意图识别失败（BadRequestError: Error code: 400 - {'error': {'message': 'Empty input messages', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_request_error'}}），使用规则兜底
+2026-08-30 20:01:33,490 | INFO     | smart_query | 意图识别（规则兜底）：query='鍚勫搧绫婚攢鍞\ue1c0\ue582鍗犳瘮' → chart_type=table
