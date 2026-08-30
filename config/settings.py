@@ -42,6 +42,12 @@ USE_LANGCHAIN = os.getenv("USE_LANGCHAIN", "true").strip().lower() in (
     "1", "true", "yes", "on",
 )
 
+# LLM 调用重试：单次调用失败（网络/限流等）自动重试的最大次数
+LLM_MAX_RETRIES = int(os.getenv("LLM_MAX_RETRIES", "2"))
+
+# SQL 生成自校验：最多尝试轮数（1 = 不重试；2 = 生成→校验→打回修正 1 次）
+SQL_MAX_ATTEMPTS = int(os.getenv("SQL_MAX_ATTEMPTS", "2"))
+
 # ==================== 常量 ====================
 CHART_TYPES = ["bar", "line", "pie", "table"]
 

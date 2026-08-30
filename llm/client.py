@@ -11,7 +11,8 @@ import re
 import time
 
 from config.settings import (
-    DEEPSEEK_API_KEY, DEEPSEEK_BASE_URL, DEEPSEEK_MODEL, USE_LANGCHAIN,
+    DEEPSEEK_API_KEY, DEEPSEEK_BASE_URL, DEEPSEEK_MODEL,
+    USE_LANGCHAIN, LLM_MAX_RETRIES,
 )
 from config.logger import logger
 
@@ -113,6 +114,7 @@ def _run_langchain(messages: list, *, temperature: float, json_mode: bool,
         temperature=temperature,
         model_kwargs=model_kwargs,
         timeout=120,
+        max_retries=LLM_MAX_RETRIES,  # LangChain 内置网络重试
     )
     # 链式调用：ChatOpenAI | StrOutputParser，体现 LangChain 的 Chain 思想
     chain = llm | StrOutputParser()
@@ -153,35 +155,45 @@ def _run_openai(messages: list, *, temperature: float, json_mode: bool,
 
 
 def _call_llm(messages: list, *, temperature: float, json_mode: bool) -> str:
-    """统一的 LLM 调用：优先 LangChain，失败自动回退 openai SDK。
+    """统一的 LLM 调用：自动重试 + 降级兜底，三层保障。
 
-    耗时统计 + 错误日志由各后端内部完成；两层都失败时抛出异常。
+    1) 优先 LangChain（ChatOpenAI 自带 max_retries 网络重试）
+    2) LangChain 失败自动回退 openai SDK 直连
+    3) 整体仍失败时按 LLM_MAX_RETRIES 指数退避重试
+
+    全部重试耗尽后抛出最后一次异常。
     """
     if not DEEPSEEK_API_KEY:
         raise RuntimeError(
             "未配置 DEEPSEEK_API_KEY，请在 .env 中填写后重启服务"
         )
     start = time.perf_counter()
+    last_error: Exception | None = None
 
-    if USE_LANGCHAIN:
+    for attempt in range(1, LLM_MAX_RETRIES + 1):
+        # --- 1) LangChain 主链路 ---
+        if USE_LANGCHAIN:
+            try:
+                return _run_langchain(messages, temperature=temperature,
+                                      json_mode=json_mode, start=start)
+            except Exception as e:
+                logger.warning(
+                    "LangChain 调用失败（%s: %s），回退 openai SDK",
+                    type(e).__name__, e,
+                )
+        # --- 2) openai SDK 兜底链路 ---
         try:
-            return _run_langchain(messages, temperature=temperature,
-                                  json_mode=json_mode, start=start)
+            return _run_openai(messages, temperature=temperature,
+                               json_mode=json_mode, start=start)
         except Exception as e:
+            last_error = e
             logger.warning(
-                "LangChain 调用失败（%s: %s），自动回退 openai SDK",
-                type(e).__name__, e,
+                "LLM 调用失败（第 %d/%d 次）：%s: %s",
+                attempt, LLM_MAX_RETRIES, type(e).__name__, e,
             )
-    try:
-        return _run_openai(messages, temperature=temperature,
-                           json_mode=json_mode, start=start)
-    except Exception as e:
-        logger.error(
-            "LLM 调用失败：%s: %s（base_url=%s）耗时=%.0fms",
-            type(e).__name__, e, DEEPSEEK_BASE_URL,
-            (time.perf_counter() - start) * 1000,
-        )
-        raise
+            if attempt < LLM_MAX_RETRIES:
+                time.sleep(0.5 * attempt)  # 指数退避：0.5s → 1s → ...
+    raise last_error
 
 
 def chat_completion(messages: list, temperature: float = 0.7) -> str:
