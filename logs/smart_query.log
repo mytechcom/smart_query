@@ -35,3 +35,15 @@ SQL=SELECT c.name AS category_name, SUM(oi.quantity * oi.price) AS sales_amount 
 2026-08-30 20:01:33,489 | ERROR    | smart_query | LLM 调用失败：BadRequestError: Error code: 400 - {'error': {'message': 'Empty input messages', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_request_error'}}（base_url=https://api.deepseek.com/v1）耗时=4705ms
 2026-08-30 20:01:33,490 | WARNING  | smart_query | LLM 意图识别失败（BadRequestError: Error code: 400 - {'error': {'message': 'Empty input messages', 'type': 'invalid_request_error', 'param': None, 'code': 'invalid_request_error'}}），使用规则兜底
 2026-08-30 20:01:33,490 | INFO     | smart_query | 意图识别（规则兜底）：query='鍚勫搧绫婚攢鍞\ue1c0\ue582鍗犳瘮' → chart_type=table
+2026-08-30 20:03:19,797 | INFO     | smart_query | 收到查询请求：'近7天每天的订单总额趋势'
+2026-08-30 20:03:27,302 | INFO     | smart_query | LLM 调用开始（LangChain）：model=deepseek-v4-flash json_mode=True 提示词字符数=435
+2026-08-30 20:03:29,345 | INFO     | smart_query | LLM 调用完成（LangChain）：耗时=7080ms 输出长度=77
+2026-08-30 20:03:29,346 | INFO     | smart_query | 意图识别完成：query='近7天每天的订单总额趋势' → chart_type=line confidence=0.98 来源=llm 耗时=9548ms
+2026-08-30 20:03:29,348 | INFO     | smart_query | LLM 调用开始（LangChain）：model=deepseek-v4-flash json_mode=True 提示词字符数=1126
+2026-08-30 20:03:38,618 | INFO     | smart_query | LLM 调用完成（LangChain）：耗时=9271ms 输出长度=349
+2026-08-30 20:03:38,620 | INFO     | smart_query | SQL 生成完成（LLM）：query='近7天每天的订单总额趋势' 耗时=9273ms
+SQL=SELECT DATE(orders.created_at) AS order_date, SUM(order_items.quantity * order_items.price) AS total_sales FROM orders INNER JOIN order_items ON orders.id = order_items.order_id WHERE orders.created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) GROUP BY order_date ORDER BY order_date;
+2026-08-30 20:03:38,805 | INFO     | smart_query | SQL 执行成功：8 行，耗时=183ms
+SQL=SELECT DATE(orders.created_at) AS order_date, SUM(order_items.quantity * order_items.price) AS total_sales FROM orders INNER JOIN order_items ON orders.id = order_items.order_id WHERE orders.created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) GROUP BY order_date ORDER BY order_date;
+2026-08-30 20:03:38,807 | INFO     | smart_query | 查询完成：query='近7天每天的订单总额趋势' chart_type=line rows=8 总耗时=19010ms
+2026-08-30 20:03:38,814 | INFO     | smart_query | 前端收到响应：query='近7天每天的订单总额趋势' rows=8
